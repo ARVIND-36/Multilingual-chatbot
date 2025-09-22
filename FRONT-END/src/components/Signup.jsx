@@ -88,7 +88,7 @@ const Signup = ({ onSwitchToLogin }) => {
           </div>
           <div className="login-center">
             <h2>Create Your Account</h2>
-            <p>Join us and start chatting in multiple languages</p>
+            <p>Engaging Citizens, Enriching Lives Daily</p>
             
             <form onSubmit={handleSignup}>
               <div className="input-group">

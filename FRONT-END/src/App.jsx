@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import Login from "./components/Login";
 import Signup from "./components/Signup";
+import Chatbot from "./components/Chatbot";
 
 function App() {
-  const [currentView, setCurrentView] = useState('login'); // 'login' or 'signup'
+  const [currentView, setCurrentView] = useState('login'); // 'login', 'signup', 'chatbot'
   const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     // Simulate initial loading
@@ -23,21 +25,41 @@ function App() {
     setCurrentView('login');
   };
 
+  const handleLoginSuccess = () => {
+    setIsAuthenticated(true);
+    setCurrentView('chatbot');
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setCurrentView('login');
+  };
+
   if (isLoading) {
     return (
       <div className="loading-container">
         <div className="loading-spinner"></div>
-        <p>Loading...</p>
+        <p>Loading Multilingual Assistant...</p>
       </div>
     );
+  }
+
+  if (isAuthenticated && currentView === 'chatbot') {
+    return <Chatbot onLogout={handleLogout} />;
   }
 
   return (
     <div className="app-container">
       {currentView === 'login' ? (
-        <Login onSwitchToSignup={handleSwitchToSignup} />
+        <Login 
+          onSwitchToSignup={handleSwitchToSignup} 
+          onLoginSuccess={handleLoginSuccess}
+        />
       ) : (
-        <Signup onSwitchToLogin={handleSwitchToLogin} />
+        <Signup 
+          onSwitchToLogin={handleSwitchToLogin}
+          onSignupSuccess={handleLoginSuccess}
+        />
       )}
     </div>
   );
