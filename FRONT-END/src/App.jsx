@@ -4,9 +4,12 @@ import Signup from "./components/Signup";
 import Chatbot from "./components/Chatbot";
 
 function App() {
-  const [currentView, setCurrentView] = useState('login'); // 'login', 'signup', 'chatbot'
+  const [currentView, setCurrentView] = useState('chatbot'); // 'login', 'signup', 'chatbot'
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Allow direct chat view in dev or when VITE_SHOW_CHAT=true
+  const showChatDirect = import.meta.env.VITE_SHOW_CHAT === 'true' || import.meta.env.DEV;
 
   useEffect(() => {
     // Simulate initial loading
@@ -44,7 +47,8 @@ function App() {
     );
   }
 
-  if (isAuthenticated && currentView === 'chatbot') {
+  // Show Chatbot if authenticated OR dev toggle is on
+  if ((isAuthenticated || showChatDirect) && currentView === 'chatbot') {
     return <Chatbot onLogout={handleLogout} />;
   }
 
