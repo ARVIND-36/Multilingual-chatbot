@@ -1,32 +1,44 @@
 const mongoose = require('mongoose');
 
 const ticketSchema = new mongoose.Schema({
-  ticketId: {
+  ticketNumber: {
     type: String,
     unique: true,
+    required: true
+  },
+  username: {
+    type: String,
     required: true
   },
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
+    required: false
+  },
+  originalMessage: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  translation: {
+    type: String,
     required: true
-  },
-  title: {
-    type: String,
-    required: [true, 'Ticket title is required'],
-    trim: true,
-    maxlength: [200, 'Title must be less than 200 characters']
-  },
-  description: {
-    type: String,
-    required: [true, 'Ticket description is required'],
-    trim: true,
-    maxlength: [1000, 'Description must be less than 1000 characters']
   },
   category: {
     type: String,
-    enum: ['technical', 'billing', 'general', 'feature_request', 'bug_report'],
-    default: 'general'
+    enum: [
+      'Water Supply',
+      'Waste Management', 
+      'Street Light',
+      'Road Maintenance',
+      'Traffic Management',
+      'Noise Pollution',
+      'Public Health',
+      'Property Tax',
+      'Birth/Death Certificate',
+      'General'
+    ],
+    default: 'General'
   },
   priority: {
     type: String,
@@ -38,17 +50,20 @@ const ticketSchema = new mongoose.Schema({
     enum: ['open', 'in_progress', 'resolved', 'closed'],
     default: 'open'
   },
-  chatbotConversation: [{
-    message: String,
-    sender: {
-      type: String,
-      enum: ['user', 'bot']
-    },
-    timestamp: {
-      type: Date,
-      default: Date.now
-    }
-  }],
+  confidence: {
+    type: Number,
+    min: 0,
+    max: 1,
+    default: 0.5
+  },
+  reason: {
+    type: String,
+    trim: true
+  },
+  aiResponse: {
+    type: String,
+    required: true
+  },
   adminNotes: {
     type: String,
     trim: true
@@ -57,18 +72,18 @@ const ticketSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   },
-  resolvedAt: Date
+  resolvedAt: {
+    type: Date
+  }
 }, {
   timestamps: true
 });
 
-// Generate unique ticket ID before saving
-ticketSchema.pre('save', async function(next) {
-  if (!this.ticketId) {
-    const count = await mongoose.model('Ticket').countDocuments();
-    this.ticketId = `TKT${String(count + 1).padStart(6, '0')}`;
-  }
-  next();
-});
+// Index for better query performance
+ticketSchema.index({ ticketNumber: 1 });
+ticketSchema.index({ username: 1 });
+ticketSchema.index({ status: 1 });
+ticketSchema.index({ category: 1 });
+ticketSchema.index({ createdAt: -1 });
 
 module.exports = mongoose.model('Ticket', ticketSchema);

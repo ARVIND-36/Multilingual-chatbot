@@ -8,30 +8,23 @@ const Chatbot = ({ onLogout, onShowDashboard }) => {
   const [messages, setMessages] = useState([
     {
       id: 1,
-      text: "Hello! I'm your multilingual assistant. I can help you communicate in various Indian languages. How can I assist you today?",
+      text: "வணக்கம்! நான் உங்கள் நகராட்சி புகார் உதவியாளர். தமிழில் உங்கள் புகாரை தெரிவிக்கவும். (Hello! I'm your municipal complaint assistant. Please share your complaint in Tamil.)\n\n📝 Examples:\n• kuppai collection problem\n• thanneer vara villai\n• theru vilakku work seiya villai\n• sadai la hole irukku",
       sender: 'bot',
       timestamp: new Date().toLocaleTimeString(),
-      language: 'en'
+      language: 'ta'
     }
   ]);
   const [inputMessage, setInputMessage] = useState('');
   const [isRecording, setIsRecording] = useState(false);
-  const [selectedLanguage, setSelectedLanguage] = useState('en');
+  const [selectedLanguage, setSelectedLanguage] = useState('ta');
   const [isTyping, setIsTyping] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const messagesEndRef = useRef(null);
 
   const languages = [
-    { code: 'en', name: 'English', flag: '🇮🇳' },
-    { code: 'hi', name: 'हिंदी', flag: '🇮🇳' },
-    { code: 'bn', name: 'বাংলা', flag: '🇧🇩' },
     { code: 'ta', name: 'தமிழ்', flag: '🇮🇳' },
-    { code: 'te', name: 'తెలుగు', flag: '🇮🇳' },
-    { code: 'ml', name: 'മലയാളം', flag: '🇮🇳' },
-    { code: 'kn', name: 'ಕನ್ನಡ', flag: '🇮🇳' },
-    { code: 'gu', name: 'ગુજરાતી', flag: '🇮🇳' },
-    { code: 'mr', name: 'मराठी', flag: '🇮🇳' },
-    { code: 'pa', name: 'ਪੰਜਾਬੀ', flag: '🇮🇳' },
+    { code: 'en', name: 'English', flag: '🇮🇳' },
+    { code: 'hi', name: 'हिंदी', flag: '🇮🇳' }
   ];
 
   const scrollToBottom = () => {
@@ -56,7 +49,7 @@ const Chatbot = ({ onLogout, onShowDashboard }) => {
     }
   }, [showOptionsMenu]);
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (inputMessage.trim()) {
       const userMessage = {
         id: messages.length + 1,
@@ -67,21 +60,85 @@ const Chatbot = ({ onLogout, onShowDashboard }) => {
       };
 
       setMessages(prev => [...prev, userMessage]);
+      const currentInput = inputMessage;
       setInputMessage('');
       setIsTyping(true);
 
-      // Simulate bot response
-      setTimeout(() => {
-        const botMessage = {
+      try {
+        // Get username from token or use default
+        let username = 'Anonymous User';
+        const token = tokenUtils.getToken();
+        
+        if (token) {
+          try {
+            const response = await fetch('http://localhost:5000/api/auth/verify', {
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.ok) {
+              const userData = await response.json();
+              username = userData.user?.username || userData.user?.email || username;
+            }
+          } catch (authError) {
+            console.log('Auth check failed, using anonymous:', authError);
+          }
+        }
+
+        // Send message to OpenAI chat service
+        const chatResponse = await fetch('http://localhost:5000/api/chat/message', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            message: currentInput,
+            username: username
+          })
+        });
+
+        const result = await chatResponse.json();
+
+        if (result.success) {
+          const botMessage = {
+            id: messages.length + 2,
+            text: result.response,
+            sender: 'bot',
+            timestamp: new Date().toLocaleTimeString(),
+            language: 'ta',
+            ticketCreated: result.ticketCreated,
+            analysis: result.analysis,
+            ticketInfo: result.ticketCreated ? {
+              ticketNumber: result.ticketNumber,
+              category: result.category,
+              priority: result.priority,
+              confidence: result.confidence,
+              translation: result.translation
+            } : null
+          };
+          setMessages(prev => [...prev, botMessage]);
+        } else {
+          // Error fallback
+          const errorMessage = {
+            id: messages.length + 2,
+            text: result.response || 'மன்னிக்கவும், ஏதோ பிழை ஏற்பட்டது. மீண்டும் முயற்சிக்கவும்.',
+            sender: 'bot',
+            timestamp: new Date().toLocaleTimeString(),
+            language: 'ta'
+          };
+          setMessages(prev => [...prev, errorMessage]);
+        }
+      } catch (error) {
+        console.error('Chat error:', error);
+        const errorMessage = {
           id: messages.length + 2,
-          text: `I understand you said: "${inputMessage}". This is a simulated response in ${languages.find(l => l.code === selectedLanguage)?.name}. In a real implementation, this would be processed by your multilingual AI model.`,
+          text: 'மன்னிக்கவும், சர்வர் இணைப்பில் சிக்கல். தயவுசெய்து மீண்டும் முயற்சிக்கவும்.',
           sender: 'bot',
           timestamp: new Date().toLocaleTimeString(),
-          language: selectedLanguage
+          language: 'ta'
         };
-        setMessages(prev => [...prev, botMessage]);
+        setMessages(prev => [...prev, errorMessage]);
+      } finally {
         setIsTyping(false);
-      }, 1500);
+      }
     }
   };
 
@@ -109,15 +166,12 @@ const Chatbot = ({ onLogout, onShowDashboard }) => {
   };
 
   const exportChat = () => {
-    const chatData = messages.map(msg => 
-      `[${msg.timestamp}] ${msg.sender === 'user' ? 'You' : 'Assistant'}: ${msg.text}`
-    ).join('\n');
-    
+    const chatData = messages.map(msg => `${msg.timestamp} - ${msg.sender}: ${msg.text}`).join('\n');
     const blob = new Blob([chatData], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `chat-export-${new Date().toDateString()}.txt`;
+    a.download = 'chat-export.txt';
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -126,17 +180,17 @@ const Chatbot = ({ onLogout, onShowDashboard }) => {
     <div className="chatbot-container">
       {/* Header */}
       <div className="chatbot-header">
-        <div className="header-left">
+        <div className="bot-info">
           <div className="bot-avatar">
             <FaRobot />
           </div>
-          <div className="bot-info">
-            <h3>Multilingual Assistant</h3>
-            <span className="status">Online • Ready to help</span>
+          <div className="bot-details">
+            <h3>Municipal Assistant</h3>
+            <span className="status">Online</span>
           </div>
         </div>
         
-        <div className="header-right">
+        <div className="header-controls">
           <div className="language-selector">
             <FaLanguage />
             <select 
@@ -217,6 +271,60 @@ const Chatbot = ({ onLogout, onShowDashboard }) => {
               <div className="message-content">
                 <div className="message-bubble">
                   <p>{message.text}</p>
+                  
+                  {/* Show ticket information if ticket was created */}
+                  {message.ticketInfo && (
+                    <div className="ticket-info">
+                      <div className="ticket-card">
+                        <FaTicketAlt className="ticket-icon" />
+                        <div className="ticket-details">
+                          <strong>Ticket #{message.ticketInfo.ticketNumber}</strong>
+                          <span className="ticket-category">{message.ticketInfo.category}</span>
+                          <span className={`ticket-priority priority-${message.ticketInfo.priority}`}>
+                            {message.ticketInfo.priority?.toUpperCase()}
+                          </span>
+                          {message.ticketInfo.confidence && (
+                            <span className="ticket-confidence">
+                              Confidence: {(message.ticketInfo.confidence * 100).toFixed(0)}%
+                            </span>
+                          )}
+                          {message.ticketInfo.translation && (
+                            <span className="ticket-translation">
+                              English: {message.ticketInfo.translation}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Show analysis info for non-ticket responses */}
+                  {message.analysis && !message.ticketCreated && (
+                    <div className="analysis-info">
+                      <div className="analysis-card">
+                        <div className="analysis-header">📊 பகுப்பாய்வு முடிவு</div>
+                        <div className="analysis-row">
+                          <span className="analysis-label">வகை:</span>
+                          <span className="analysis-value">{message.analysis.category}</span>
+                        </div>
+                        <div className="analysis-row">
+                          <span className="analysis-label">நம்பகத்தன்மை:</span>
+                          <span className="analysis-value">{(message.analysis.confidence * 100).toFixed(0)}%</span>
+                        </div>
+                        {message.analysis.translation && (
+                          <div className="analysis-row">
+                            <span className="analysis-label">English:</span>
+                            <span className="analysis-value">{message.analysis.translation}</span>
+                          </div>
+                        )}
+                        <div className="analysis-reason">
+                          <span className="reason-label">காரணம்:</span>
+                          <span className="reason-text">{message.analysis.reason}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="message-actions">
                     <button 
                       className="action-btn" 
@@ -273,7 +381,7 @@ const Chatbot = ({ onLogout, onShowDashboard }) => {
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder={`Type your message in ${languages.find(l => l.code === selectedLanguage)?.name}...`}
+              placeholder="தமிழில் உங்கள் புகாரை தெரிவிக்கவும்... (Type your complaint in Tamil...)"
               className="message-input"
               rows="1"
             />
@@ -300,7 +408,7 @@ const Chatbot = ({ onLogout, onShowDashboard }) => {
         </div>
         
         <div className="input-footer">
-          <p>Press Enter to send • Shift+Enter for new line</p>
+          <p>Enter ஐ அழுத்தி அனுப்பவும் • Shift+Enter புதிய வரிக்கு</p>
         </div>
       </div>
     </div>

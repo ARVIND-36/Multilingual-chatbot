@@ -52,10 +52,32 @@ const UserDashboard = ({ onLogout, onBackToChatbot }) => {
 
   const fetchTickets = async () => {
     try {
-      const response = await dashboardAPI.getUserTickets();
-      setTickets(response.tickets);
+      const token = tokenUtils.getToken();
+      if (token) {
+        // Get user ID first
+        const userResponse = await fetch('http://localhost:5000/api/auth/verify', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          const userId = userData.user?.id;
+          
+          // Fetch user tickets
+          const ticketsResponse = await fetch(`http://localhost:5000/api/complaints/user/${userId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          
+          if (ticketsResponse.ok) {
+            const ticketsData = await ticketsResponse.json();
+            setTickets(ticketsData.tickets || []);
+          }
+        }
+      }
     } catch (error) {
       console.error('Error fetching tickets:', error);
+      // Keep sample data if API fails
+      setTickets(sampleTickets);
     } finally {
       setLoading(false);
     }
@@ -100,11 +122,7 @@ const UserDashboard = ({ onLogout, onBackToChatbot }) => {
         <nav>
           <ul>
             <li className="active">📊 Dashboard</li>
-            <li>📝 New Complaint</li>
-            <li>📋 My Complaints</li>
-            <li>🔔 Notifications</li>
-            <li>📍 Track Location</li>
-            <li>⚙️ Settings</li>
+            <li> My Complaints</li>
           </ul>
         </nav>
         <div className="chatbot-quick-access">
@@ -127,13 +145,6 @@ const UserDashboard = ({ onLogout, onBackToChatbot }) => {
               <option value="English">English</option>
               <option value="Hindi">हिन्दी</option>
               <option value="Tamil">தமிழ்</option>
-              <option value="Telugu">తెలుగు</option>
-              <option value="Malayalam">മലയാളം</option>
-              <option value="Kannada">ಕನ್ನಡ</option>
-              <option value="Gujarati">ગુજરાતી</option>
-              <option value="Marathi">मराठी</option>
-              <option value="Punjabi">ਪੰਜਾਬੀ</option>
-              <option value="Bengali">বাংলা</option>
             </select>
           </div>
           <div className="user-profile">
@@ -190,7 +201,7 @@ const UserDashboard = ({ onLogout, onBackToChatbot }) => {
                         </span>
                       </td>
                       <td>
-                        <button className="view-btn">View Details</button>
+                        <span className="ticket-id">#{complaint.ticketId || complaint.id}</span>
                       </td>
                     </tr>
                   ))}
@@ -201,14 +212,8 @@ const UserDashboard = ({ onLogout, onBackToChatbot }) => {
 
           {/* Quick Actions */}
           <div className="quick-actions">
-            <button className="action-btn new-complaint">
-              🗣️ Voice Complaint
-            </button>
-            <button className="action-btn track-complaint">
-              🔍 Track Complaint
-            </button>
-            <button className="action-btn emergency">
-              🚨 Emergency Services
+            <button className="action-btn new-complaint" onClick={handleOpenChatbot}>
+              � Submit New Complaint
             </button>
           </div>
         </div>

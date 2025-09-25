@@ -17,6 +17,7 @@ app.use(express.urlencoded({extended : false}));
 // Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/dashboard', require('./routes/dashboard'));
+app.use('/api/chat', require('./routes/chat'));
 
 // Basic route
 app.get('/', (req, res) => {
@@ -36,6 +37,7 @@ const connectDB = async () => {
 
 // Connect to database
 connectDB();
+
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

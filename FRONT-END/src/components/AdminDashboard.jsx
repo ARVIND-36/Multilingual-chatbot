@@ -147,9 +147,6 @@ const AdminDashboard = ({ onLogout, onBackToChatbot }) => {
             <li className={activeTab === 'tickets' ? 'active' : ''} onClick={() => setActiveTab('tickets')}>
               🎫 Manage Tickets ({tickets.length})
             </li>
-            <li>👥 User Management</li>
-            <li>📈 Reports</li>
-            <li>⚙️ System Settings</li>
           </ul>
         </nav>
       </aside>
@@ -286,7 +283,7 @@ const AdminDashboard = ({ onLogout, onBackToChatbot }) => {
                                 🔒
                               </button>
                             )}
-                            <button className="view-btn" title="View Details">👁️</button>
+
                           </td>
                         </tr>
                       ))
