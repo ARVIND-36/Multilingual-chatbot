@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { authAPI, tokenUtils, dashboardAPI } from '../services/api';
-import '../clientDashboard.css';
+import '../styles/clientDashboard.css';
 
 const UserDashboard = ({ onLogout, onBackToChatbot }) => {
   const [user, setUser] = useState(null);

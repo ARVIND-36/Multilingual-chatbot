@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { tokenUtils, dashboardAPI } from '../services/api';
-import '../adminDashboard.css';
+import '../styles/adminDashboard.css';
 
 const AdminDashboard = ({ onLogout, onBackToChatbot }) => {
   const [stats, setStats] = useState(null);
