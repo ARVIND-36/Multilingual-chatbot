@@ -1,7 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { FaPaperPlane, FaMicrophone, FaStop, FaCog, FaUser, FaRobot, FaCopy, FaDownload, FaLanguage, FaVolumeUp, FaPause } from 'react-icons/fa';
+import { FaPaperPlane, FaMicrophone, FaStop, FaCog, FaUser, FaRobot, FaCopy, FaDownload, FaLanguage, FaVolumeUp, FaPause, FaEllipsisV, FaTachometerAlt, FaTicketAlt } from 'react-icons/fa';
+import { tokenUtils } from '../services/api';
 
-const Chatbot = ({ onLogout }) => {
+const Chatbot = ({ onLogout, onShowDashboard }) => {
+  const [showOptionsMenu, setShowOptionsMenu] = useState(false);
+  const optionsMenuRef = useRef(null);
   const [messages, setMessages] = useState([
     {
       id: 1,
@@ -38,6 +41,20 @@ const Chatbot = ({ onLogout }) => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Close options menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (optionsMenuRef.current && !optionsMenuRef.current.contains(event.target)) {
+        setShowOptionsMenu(false);
+      }
+    };
+
+    if (showOptionsMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showOptionsMenu]);
 
   const handleSendMessage = () => {
     if (inputMessage.trim()) {
@@ -143,9 +160,48 @@ const Chatbot = ({ onLogout }) => {
             <FaCog />
           </button>
           
-          <button className="logout-btn" onClick={onLogout} title="Logout">
-            <FaUser />
-          </button>
+          <div className="options-menu-container" ref={optionsMenuRef}>
+            <button 
+              className="header-btn options-btn" 
+              onClick={() => setShowOptionsMenu(!showOptionsMenu)}
+              title="More Options"
+            >
+              <FaEllipsisV />
+            </button>
+            
+            {showOptionsMenu && (
+              <div className="options-dropdown">
+                <button 
+                  className="dropdown-item" 
+                  onClick={() => {
+                    setShowOptionsMenu(false);
+                    onShowDashboard?.();
+                  }}
+                >
+                  <FaTachometerAlt /> Dashboard
+                </button>
+                <button 
+                  className="dropdown-item" 
+                  onClick={() => {
+                    setShowOptionsMenu(false);
+                    // Future: Open ticket creation modal
+                    alert('Ticket creation feature coming soon!');
+                  }}
+                >
+                  <FaTicketAlt /> My Tickets
+                </button>
+                <button 
+                  className="dropdown-item logout-item" 
+                  onClick={() => {
+                    setShowOptionsMenu(false);
+                    onLogout?.();
+                  }}
+                >
+                  <FaUser /> Logout
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

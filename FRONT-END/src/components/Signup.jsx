@@ -3,17 +3,20 @@ import Image from "../assets/image.png";
 import Logo from "../assets/logo.png";
 import GoogleSvg from "../assets/icons8-google.svg";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { authAPI, tokenUtils } from '../services/api';
 
-const Signup = ({ onSwitchToLogin }) => {
+const Signup = ({ onSwitchToLogin, onSignupSuccess }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
-    fullName: '',
+    username: '',
     email: '',
+    aadhar_no: '',
     password: '',
     confirmPassword: ''
   });
   const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -33,14 +36,24 @@ const Signup = ({ onSwitchToLogin }) => {
   const validateForm = () => {
     const newErrors = {};
     
-    if (!formData.fullName.trim()) {
-      newErrors.fullName = 'Full name is required';
+    if (!formData.username.trim()) {
+      newErrors.username = 'Username is required';
+    } else if (formData.username.length < 3) {
+      newErrors.username = 'Username must be at least 3 characters';
+    } else if (!/^[a-zA-Z0-9_]+$/.test(formData.username)) {
+      newErrors.username = 'Username can only contain letters, numbers, and underscores';
     }
     
     if (!formData.email.trim()) {
       newErrors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Email is invalid';
+    }
+
+    if (!formData.aadhar_no.trim()) {
+      newErrors.aadhar_no = 'Aadhar number is required';
+    } else if (!/^\d{12}$/.test(formData.aadhar_no)) {
+      newErrors.aadhar_no = 'Aadhar number must be exactly 12 digits';
     }
     
     if (!formData.password) {
@@ -59,14 +72,38 @@ const Signup = ({ onSwitchToLogin }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSignup = (e) => {
+  const handleSignup = async (e) => {
     e.preventDefault();
     
     if (validateForm()) {
-      // TODO: Implement actual signup logic
-      console.log("Signup data:", formData);
-      alert("Account created successfully!");
-      onSwitchToLogin?.();
+      setIsLoading(true);
+      try {
+        const { confirmPassword, ...signupData } = formData;
+        const response = await authAPI.signup(signupData);
+        
+        if (response.success) {
+          // Store token and user data
+          tokenUtils.setToken(response.token);
+          tokenUtils.setUser(response.user);
+          
+          alert("Account created successfully!");
+          onSignupSuccess?.(response.user);
+        }
+      } catch (error) {
+        console.error('Signup error:', error);
+        if (error.errors) {
+          // Handle validation errors from backend
+          const backendErrors = {};
+          error.errors.forEach(err => {
+            backendErrors[err.path || err.param] = err.msg;
+          });
+          setErrors(backendErrors);
+        } else {
+          alert(error.message || 'Failed to create account. Please try again.');
+        }
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -94,13 +131,14 @@ const Signup = ({ onSwitchToLogin }) => {
               <div className="input-group">
                 <input 
                   type="text" 
-                  name="fullName"
-                  placeholder="Full Name" 
-                  value={formData.fullName}
+                  name="username"
+                  placeholder="Username" 
+                  value={formData.username}
                   onChange={handleInputChange}
-                  className={errors.fullName ? 'error' : ''}
+                  className={errors.username ? 'error' : ''}
+                  disabled={isLoading}
                 />
-                {errors.fullName && <span className="error-message">{errors.fullName}</span>}
+                {errors.username && <span className="error-message">{errors.username}</span>}
               </div>
 
               <div className="input-group">
@@ -111,8 +149,23 @@ const Signup = ({ onSwitchToLogin }) => {
                   value={formData.email}
                   onChange={handleInputChange}
                   className={errors.email ? 'error' : ''}
+                  disabled={isLoading}
                 />
                 {errors.email && <span className="error-message">{errors.email}</span>}
+              </div>
+
+              <div className="input-group">
+                <input 
+                  type="text" 
+                  name="aadhar_no"
+                  placeholder="Aadhar Number (12 digits)" 
+                  value={formData.aadhar_no}
+                  onChange={handleInputChange}
+                  className={errors.aadhar_no ? 'error' : ''}
+                  disabled={isLoading}
+                  maxLength="12"
+                />
+                {errors.aadhar_no && <span className="error-message">{errors.aadhar_no}</span>}
               </div>
 
               <div className="input-group">
@@ -124,6 +177,7 @@ const Signup = ({ onSwitchToLogin }) => {
                     value={formData.password}
                     onChange={handleInputChange}
                     className={errors.password ? 'error' : ''}
+                    disabled={isLoading}
                   />
                   {showPassword ? 
                     <FaEyeSlash 
@@ -148,6 +202,7 @@ const Signup = ({ onSwitchToLogin }) => {
                     value={formData.confirmPassword}
                     onChange={handleInputChange}
                     className={errors.confirmPassword ? 'error' : ''}
+                    disabled={isLoading}
                   />
                   {showConfirmPassword ? 
                     <FaEyeSlash 
@@ -173,8 +228,8 @@ const Signup = ({ onSwitchToLogin }) => {
               </div>
               
               <div className="login-center-buttons">
-                <button type="submit" className="primary-btn">
-                  Create Account
+                <button type="submit" className="primary-btn" disabled={isLoading}>
+                  {isLoading ? 'Creating Account...' : 'Create Account'}
                 </button>
                 <button type="button" onClick={handleGoogleSignup} className="google-btn">
                   <img src={GoogleSvg} alt="Google" />

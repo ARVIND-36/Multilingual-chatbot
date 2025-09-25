@@ -3,8 +3,9 @@ import Image from "../assets/image.png";
 import Logo from "../assets/logo.png";
 import GoogleSvg from "../assets/icons8-google.svg";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { authAPI, tokenUtils } from '../services/api';
 
-const Login = ({ onSwitchToSignup }) => {
+const Login = ({ onSwitchToSignup, onLoginSuccess }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
@@ -12,6 +13,7 @@ const Login = ({ onSwitchToSignup }) => {
   });
   const [errors, setErrors] = useState({});
   const [rememberMe, setRememberMe] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -45,13 +47,37 @@ const Login = ({ onSwitchToSignup }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     
     if (validateForm()) {
-      // TODO: Implement actual login logic
-      console.log("Login data:", { ...formData, rememberMe });
-      alert("Login successful!");
+      setIsLoading(true);
+      try {
+        const response = await authAPI.login(formData);
+        
+        if (response.success) {
+          // Store token and user data
+          tokenUtils.setToken(response.token);
+          tokenUtils.setUser(response.user);
+          
+          alert("Login successful!");
+          onLoginSuccess?.(response.user);
+        }
+      } catch (error) {
+        console.error('Login error:', error);
+        if (error.errors) {
+          // Handle validation errors from backend
+          const backendErrors = {};
+          error.errors.forEach(err => {
+            backendErrors[err.path || err.param] = err.msg;
+          });
+          setErrors(backendErrors);
+        } else {
+          alert(error.message || 'Login failed. Please try again.');
+        }
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -90,6 +116,7 @@ const Login = ({ onSwitchToSignup }) => {
                   value={formData.email}
                   onChange={handleInputChange}
                   className={errors.email ? 'error' : ''}
+                  disabled={isLoading}
                 />
                 {errors.email && <span className="error-message">{errors.email}</span>}
               </div>
@@ -103,6 +130,7 @@ const Login = ({ onSwitchToSignup }) => {
                     value={formData.password}
                     onChange={handleInputChange}
                     className={errors.password ? 'error' : ''}
+                    disabled={isLoading}
                   />
                   {showPassword ? 
                     <FaEyeSlash 
@@ -136,8 +164,8 @@ const Login = ({ onSwitchToSignup }) => {
               </div>
               
               <div className="login-center-buttons">
-                <button type="submit" className="primary-btn">
-                  Sign In
+                <button type="submit" className="primary-btn" disabled={isLoading}>
+                  {isLoading ? 'Signing In...' : 'Sign In'}
                 </button>
                 <button type="button" onClick={handleGoogleLogin} className="google-btn">
                   <img src={GoogleSvg} alt="Google" />
