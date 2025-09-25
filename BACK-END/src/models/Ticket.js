@@ -3,7 +3,6 @@ const mongoose = require('mongoose');
 const ticketSchema = new mongoose.Schema({
   ticketNumber: {
     type: String,
-    unique: true,
     required: true
   },
   username: {
@@ -80,7 +79,7 @@ const ticketSchema = new mongoose.Schema({
 });
 
 // Index for better query performance
-ticketSchema.index({ ticketNumber: 1 });
+ticketSchema.index({ ticketNumber: 1 }, { unique: true });
 ticketSchema.index({ username: 1 });
 ticketSchema.index({ status: 1 });
 ticketSchema.index({ category: 1 });

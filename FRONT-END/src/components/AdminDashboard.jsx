@@ -16,36 +16,36 @@ const AdminDashboard = ({ onLogout, onBackToChatbot }) => {
   // Sample tickets for demonstration (will be replaced by real API data)
   const sampleTickets = [
     {
-      id: 'TK001',
-      ticketId: 'TK001',
-      userId: { username: 'john_doe', email: 'john@example.com' },
+      _id: 'sample1',
+      ticketNumber: 'TK-20250925-001',
+      username: 'john_doe',
       category: 'Waste Management',
       status: 'open',
       priority: 'high',
-      title: 'Garbage not collected for 3 days',
-      description: 'Garbage bins have not been emptied in Ward 12 for the past 3 days.',
+      originalMessage: 'kuppai collection problem',
+      translation: 'Garbage collection problem',
       createdAt: '2025-09-22T10:30:00Z'
     },
     {
-      id: 'TK002',
-      ticketId: 'TK002',
-      userId: { username: 'jane_smith', email: 'jane@example.com' },
+      _id: 'sample2',
+      ticketNumber: 'TK-20250925-002',
+      username: 'jane_smith',
       category: 'Street Light',
       status: 'in_progress',
       priority: 'medium',
-      title: 'Street light not working',
-      description: 'Street light on Main Road has been non-functional since last week.',
+      originalMessage: 'street light problem',
+      translation: 'Street light not working',
       createdAt: '2025-09-21T14:15:00Z'
     },
     {
-      id: 'TK003',
-      ticketId: 'TK003',
-      userId: { username: 'bob_wilson', email: 'bob@example.com' },
+      _id: 'sample3',
+      ticketNumber: 'TK-20250925-003',
+      username: 'bob_wilson',
       category: 'Water Supply',
       status: 'resolved',
       priority: 'low',
-      title: 'Low water pressure',
-      description: 'Water pressure is very low in Block B apartments.',
+      originalMessage: 'thanneer supply problem',
+      translation: 'Water supply issue',
       createdAt: '2025-09-20T09:45:00Z'
     }
   ];
@@ -67,11 +67,11 @@ const AdminDashboard = ({ onLogout, onBackToChatbot }) => {
   const fetchTickets = async () => {
     try {
       const response = await dashboardAPI.getAdminTickets(filters);
-      setTickets(response.tickets);
+      setTickets(response.tickets || []);
     } catch (error) {
       console.error('Error fetching tickets:', error);
-      // Use sample data when API fails
-      setTickets(sampleTickets);
+      // Set empty array if API fails - no fallback to sample data
+      setTickets([]);
     } finally {
       setLoading(false);
     }
@@ -236,13 +236,13 @@ const AdminDashboard = ({ onLogout, onBackToChatbot }) => {
                   <tbody>
                     {tickets.length === 0 ? (
                       <tr>
-                        <td colSpan="7" className="no-tickets">No tickets found</td>
+                        <td colSpan="7" className="no-tickets">No tickets found in database. Tickets will appear here when users create complaints through the chatbot.</td>
                       </tr>
                     ) : (
                       tickets.map(ticket => (
                         <tr key={ticket._id || ticket.id}>
-                          <td>#{ticket.ticketId || ticket.id}</td>
-                          <td>{ticket.userId?.username || ticket.user || 'Unknown'}</td>
+                          <td>#{ticket.ticketNumber || ticket.ticketId || ticket.id}</td>
+                          <td>{ticket.username || 'Unknown'}</td>
                           <td>{ticket.category || 'General'}</td>
                           <td>
                             <span className={`status ${ticket.status}`}>
@@ -258,7 +258,7 @@ const AdminDashboard = ({ onLogout, onBackToChatbot }) => {
                           <td className="action-buttons">
                             {ticket.status === 'open' && (
                               <button 
-                                onClick={() => updateTicketStatus(ticket.ticketId || ticket.id, 'in_progress')}
+                                onClick={() => updateTicketStatus(ticket.ticketNumber || ticket.ticketId || ticket.id, 'in_progress')}
                                 className="action-btn progress-btn"
                                 title="Start Progress"
                               >
@@ -267,7 +267,7 @@ const AdminDashboard = ({ onLogout, onBackToChatbot }) => {
                             )}
                             {ticket.status === 'in_progress' && (
                               <button 
-                                onClick={() => updateTicketStatus(ticket.ticketId || ticket.id, 'resolved')}
+                                onClick={() => updateTicketStatus(ticket.ticketNumber || ticket.ticketId || ticket.id, 'resolved')}
                                 className="action-btn resolve-btn"
                                 title="Mark Resolved"
                               >
@@ -276,7 +276,7 @@ const AdminDashboard = ({ onLogout, onBackToChatbot }) => {
                             )}
                             {ticket.status === 'resolved' && (
                               <button 
-                                onClick={() => updateTicketStatus(ticket.ticketId || ticket.id, 'closed')}
+                                onClick={() => updateTicketStatus(ticket.ticketNumber || ticket.ticketId || ticket.id, 'closed')}
                                 className="action-btn close-btn"
                                 title="Close Ticket"
                               >

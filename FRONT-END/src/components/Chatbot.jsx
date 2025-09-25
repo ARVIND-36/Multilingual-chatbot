@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { FaPaperPlane, FaMicrophone, FaStop, FaCog, FaUser, FaRobot, FaCopy, FaDownload, FaLanguage, FaVolumeUp, FaPause, FaEllipsisV, FaTachometerAlt, FaTicketAlt } from 'react-icons/fa';
+import { FaPaperPlane, FaMicrophone, FaStop, FaUser, FaRobot, FaCopy, FaDownload, FaLanguage, FaVolumeUp, FaPause, FaEllipsisV, FaTachometerAlt, FaTicketAlt } from 'react-icons/fa';
 import { tokenUtils } from '../services/api';
 
 const Chatbot = ({ onLogout, onShowDashboard }) => {
@@ -191,30 +191,29 @@ const Chatbot = ({ onLogout, onShowDashboard }) => {
         </div>
         
         <div className="header-controls">
-          <div className="language-selector">
-            <FaLanguage />
-            <select 
-              value={selectedLanguage} 
-              onChange={(e) => setSelectedLanguage(e.target.value)}
-              className="language-dropdown"
-            >
-              {languages.map(lang => (
-                <option key={lang.code} value={lang.code}>
-                  {lang.flag} {lang.name}
-                </option>
-              ))}
-            </select>
+          <div className="control-group">
+            <div className="language-selector">
+              <FaLanguage />
+              <select 
+                value={selectedLanguage} 
+                onChange={(e) => setSelectedLanguage(e.target.value)}
+                className="language-dropdown"
+              >
+                {languages.map(lang => (
+                  <option key={lang.code} value={lang.code}>
+                    {lang.flag} {lang.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
           
-          <button className="header-btn" onClick={exportChat} title="Export Chat">
-            <FaDownload />
-          </button>
-          
-          <button className="header-btn" title="Settings">
-            <FaCog />
-          </button>
-          
-          <div className="options-menu-container" ref={optionsMenuRef}>
+          <div className="control-group">
+            <button className="header-btn" onClick={exportChat} title="Export Chat">
+              <FaDownload />
+            </button>
+            
+            <div className="options-menu-container" ref={optionsMenuRef}>
             <button 
               className="header-btn options-btn" 
               onClick={() => setShowOptionsMenu(!showOptionsMenu)}
@@ -226,7 +225,7 @@ const Chatbot = ({ onLogout, onShowDashboard }) => {
             {showOptionsMenu && (
               <div className="options-dropdown">
                 <button 
-                  className="dropdown-item" 
+                  className="dropdown-item primary-item" 
                   onClick={() => {
                     setShowOptionsMenu(false);
                     onShowDashboard?.();
@@ -238,12 +237,12 @@ const Chatbot = ({ onLogout, onShowDashboard }) => {
                   className="dropdown-item" 
                   onClick={() => {
                     setShowOptionsMenu(false);
-                    // Future: Open ticket creation modal
-                    alert('Ticket creation feature coming soon!');
+                    onShowDashboard?.('tickets');
                   }}
                 >
                   <FaTicketAlt /> My Tickets
                 </button>
+                <div className="dropdown-divider"></div>
                 <button 
                   className="dropdown-item logout-item" 
                   onClick={() => {
@@ -255,6 +254,7 @@ const Chatbot = ({ onLogout, onShowDashboard }) => {
                 </button>
               </div>
             )}
+            </div>
           </div>
         </div>
       </div>

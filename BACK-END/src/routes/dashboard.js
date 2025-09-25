@@ -1,6 +1,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const Ticket = require('../models/Ticket');
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-here';
@@ -78,7 +79,7 @@ router.get('/user/profile', authenticateToken, async (req, res) => {
 // @access  Private
 router.get('/user/tickets', authenticateToken, async (req, res) => {
   try {
-    const tickets = await Ticket.find({ userId: req.user._id })
+    const tickets = await Ticket.find({ username: req.user.username })
       .sort({ createdAt: -1 })
       .populate('resolvedBy', 'username');
 
@@ -109,7 +110,6 @@ router.get('/admin/tickets', authenticateToken, requireAdmin, async (req, res) =
 
     const tickets = await Ticket.find(filter)
       .sort({ createdAt: -1 })
-      .populate('userId', 'username email')
       .populate('resolvedBy', 'username');
 
     res.json({
@@ -183,10 +183,10 @@ router.put('/admin/tickets/:ticketId', authenticateToken, requireAdmin, async (r
     }
 
     const ticket = await Ticket.findOneAndUpdate(
-      { ticketId: req.params.ticketId },
+      { ticketNumber: req.params.ticketId },
       updateData,
       { new: true }
-    ).populate('userId', 'username email').populate('resolvedBy', 'username');
+    ).populate('resolvedBy', 'username');
 
     if (!ticket) {
       return res.status(404).json({

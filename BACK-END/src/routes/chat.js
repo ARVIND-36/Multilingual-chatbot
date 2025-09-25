@@ -31,12 +31,38 @@ router.post('/message', async (req, res) => {
     // Create ticket if the analysis suggests it's valid
     if (analysis.createTicket && analysis.isValidComplaint) {
       try {
+        // Check for duplicate tickets (similar message in last 24 hours)
+        const last24Hours = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        const existingTicket = await Ticket.findOne({
+          username: username, // Always use the username from request
+          category: analysis.category,
+          status: { $in: ['open', 'in_progress'] },
+          createdAt: { $gte: last24Hours }
+        });
+
+        if (existingTicket) {
+          console.log('Duplicate ticket prevented for user:', username);
+          return res.json({
+            success: true,
+            ticketCreated: false,
+            duplicateFound: true,
+            existingTicket: {
+              ticketNumber: existingTicket.ticketNumber,
+              category: existingTicket.category,
+              status: existingTicket.status,
+              createdAt: existingTicket.createdAt
+            },
+            response: `${analysis.response}\n\n⚠️ Similar ticket already exists!\n📋 Existing Ticket: ${existingTicket.ticketNumber}\n📂 Category: ${existingTicket.category}\n🔄 Status: ${existingTicket.status.toUpperCase()}`,
+            analysis: analysis
+          });
+        }
+
         ticketNumber = chatService.generateTicketNumber();
         const priority = chatService.determinePriority(analysis.category);
 
         ticket = new Ticket({
           ticketNumber,
-          username: analysis.username || username,
+          username: username, // Always use the username from request
           originalMessage: analysis.originalMessage,
           translation: analysis.translation,
           category: analysis.category,
