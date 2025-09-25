@@ -2311,5 +2311,65 @@ body{
   margin: 8px 0;
 }
 
+/* Location Request Styles */
+.location-request {
+  margin-top: 12px;
+}
+
+.location-card {
+  padding: 16px;
+  background: linear-gradient(135deg, #FFF8E7 0%, #F0F8E7 100%);
+  border: 2px solid #FF9933;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(255, 153, 51, 0.15);
+}
+
+.location-header {
+  font-weight: 600;
+  color: #FF9933;
+  margin-bottom: 10px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.location-message {
+  color: #000080;
+  font-size: 13px;
+  margin-bottom: 12px;
+  text-align: center;
+  font-weight: 500;
+}
+
+.location-examples {
+  background: white;
+  border: 1px solid #138808;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.location-examples strong {
+  color: #138808;
+  font-size: 12px;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.location-examples ul {
+  margin: 0;
+  padding-left: 16px;
+  list-style-type: disc;
+}
+
+.location-examples li {
+  color: #2F4F2F;
+  font-size: 11px;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.location-examples li:last-child {
+  margin-bottom: 0;
+}
+
 
 

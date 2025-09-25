@@ -105,6 +105,8 @@ const Chatbot = ({ onLogout, onShowDashboard }) => {
             timestamp: new Date().toLocaleTimeString(),
             language: 'ta',
             ticketCreated: result.ticketCreated,
+            needsLocation: result.needsLocation,
+            isValidComplaint: result.analysis?.isValidComplaint,
             analysis: result.analysis,
             ticketInfo: result.ticketCreated ? {
               ticketNumber: result.ticketNumber,
@@ -298,8 +300,8 @@ const Chatbot = ({ onLogout, onShowDashboard }) => {
                     </div>
                   )}
 
-                  {/* Show analysis info for non-ticket responses */}
-                  {message.analysis && !message.ticketCreated && (
+                  {/* Show analysis info only for invalid complaints (not for location requests or normal chat) */}
+                  {message.analysis && !message.ticketCreated && !message.needsLocation && message.isValidComplaint === false && (
                     <div className="analysis-info">
                       <div className="analysis-card">
                         <div className="analysis-header">📊 பகுப்பாய்வு முடிவு</div>
@@ -320,6 +322,26 @@ const Chatbot = ({ onLogout, onShowDashboard }) => {
                         <div className="analysis-reason">
                           <span className="reason-label">காரணம்:</span>
                           <span className="reason-text">{message.analysis.reason}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Show location request prompt */}
+                  {message.needsLocation && (
+                    <div className="location-request">
+                      <div className="location-card">
+                        <div className="location-header">📍 இடப் பிரிவு தேவை</div>
+                        <div className="location-message">
+                          Location information required for ticket creation:
+                        </div>
+                        <div className="location-examples">
+                          <strong>Examples:</strong>
+                          <ul>
+                            <li>Ward 1, Ward 2, Ward 15</li>
+                            <li>Anna Nagar, T Nagar, Adyar</li>
+                            <li>1st Street, 2nd Cross</li>
+                          </ul>
                         </div>
                       </div>
                     </div>

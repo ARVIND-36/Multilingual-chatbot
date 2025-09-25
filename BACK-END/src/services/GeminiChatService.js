@@ -49,6 +49,12 @@ Common Tamil words in English:
 - problem = prachana
 - street light = theru vilakku
 - road = sadai
+- ward = வார்டு
+
+Location indicators:
+- ward number: ward 1, ward 2, वार्ड 1, வார்டு 1
+- area names: anna nagar, t nagar, etc
+- street names: 1st street, 2nd cross, etc
 
 Analyze if this is a valid municipal complaint about:
 - Water supply issues (thanneer prachana)
@@ -62,22 +68,26 @@ Analyze if this is a valid municipal complaint about:
 For the message "${userMessage}", determine:
 1. Is it a valid municipal complaint requiring action?
 2. What category does it belong to?
-3. Should a ticket be created?
+3. Does it contain location information (ward number, area name, street)?
+4. Should a ticket be created?
 
 Rules:
-- createTicket = true ONLY for clear, actionable municipal issues
-- createTicket = false for greetings, questions, unclear messages
+- createTicket = true ONLY for clear, actionable municipal issues WITH location information
+- needsLocation = true if complaint is valid but missing location/ward number
+- createTicket = false for greetings, questions, unclear messages, or missing location
 - Be conservative: when in doubt, set createTicket = false
 
 Response format (JSON only, no markdown, no explanations):
 {
   "isValidComplaint": true,
   "category": "Waste Management",
-  "createTicket": true,
+  "hasLocation": false,
+  "needsLocation": true,
+  "createTicket": false,
   "confidence": 0.9,
   "translation": "Garbage is not being collected in our area",
-  "reason": "Valid municipal waste management complaint",
-  "response": "Ungal kuppai collection problem register seiyappa pattathu. Ticket create seiyappattathu."
+  "reason": "Valid complaint but needs location information",
+  "response": "உங்கள் புகார் புரிந்துகொள்ளப்பட்டது. தயவுசெய்து உங்கள் வார்டு எண் அல்லது பகுதியின் பெயரைத் தெரிவிக்கவும்."
 }`;
 
       console.log('Sending request to Gemini...');
@@ -136,6 +146,8 @@ Response format (JSON only, no markdown, no explanations):
       const result = {
         isValidComplaint: Boolean(analysis.isValidComplaint),
         category: this.normalizeCategory(analysis.category),
+        hasLocation: Boolean(analysis.hasLocation),
+        needsLocation: Boolean(analysis.needsLocation),
         createTicket: Boolean(analysis.createTicket),
         confidence: typeof analysis.confidence === 'number' ? Math.min(Math.max(analysis.confidence, 0), 1) : 0.5,
         translation: analysis.translation || userMessage,

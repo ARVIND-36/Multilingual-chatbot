@@ -28,8 +28,23 @@ router.post('/message', async (req, res) => {
     let ticket = null;
     let ticketNumber = null;
 
-    // Create ticket if the analysis suggests it's valid
-    if (analysis.createTicket && analysis.isValidComplaint) {
+    // Handle location requirements first
+    if (analysis.isValidComplaint && analysis.needsLocation && !analysis.hasLocation) {
+      return res.json({
+        success: true,
+        ticketCreated: false,
+        needsLocation: true,
+        category: analysis.category,
+        confidence: analysis.confidence,
+        translation: analysis.translation,
+        reason: analysis.reason,
+        response: analysis.response,
+        analysis: analysis
+      });
+    }
+
+    // Create ticket if the analysis suggests it's valid and has location
+    if (analysis.createTicket && analysis.isValidComplaint && analysis.hasLocation) {
       try {
         // Check for duplicate tickets (similar message in last 24 hours)
         const last24Hours = new Date(Date.now() - 24 * 60 * 60 * 1000);
