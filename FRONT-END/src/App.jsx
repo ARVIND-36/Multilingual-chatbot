@@ -29,7 +29,12 @@ function App() {
             const userData = await response.json();
             setIsAuthenticated(true);
             setUserRole(userData.role || 'user');
-            setCurrentView('chatbot');
+            // Route admin users to admin dashboard, regular users to chatbot
+            if (userData.role === 'admin') {
+              setCurrentView('admin-dashboard');
+            } else {
+              setCurrentView('chatbot');
+            }
           } else {
             tokenUtils.removeToken();
           }
@@ -56,7 +61,12 @@ function App() {
   const handleLoginSuccess = (user) => {
     setIsAuthenticated(true);
     setUserRole(user?.role || 'user');
-    setCurrentView('chatbot');
+    // Route admin users to admin dashboard, regular users to chatbot
+    if (user?.role === 'admin') {
+      setCurrentView('admin-dashboard');
+    } else {
+      setCurrentView('chatbot');
+    }
   };
 
   const handleLogout = () => {
